@@ -160,51 +160,55 @@ namespace MushroomPocket {
             Console.Read();
         }
 
+        public virtual void DisplayStartingAnimation() {
+            // Introductory animation
+            Console.Clear();
+            Console.WriteLine("In the desolate sands of Sahara...");
+            Thread.Sleep(2000);
+            Console.WriteLine("Two warriors are about to face off with their grit and mighty speed...");
+            Thread.Sleep(2000);
+            Console.WriteLine("In the EPIC battle of...");
+            Thread.Sleep(2000);
+            Console.Clear();
+            int toWriteIndex = 0;
+            string gameTitle = "🎮 MushroomKart 🎮";
+            while (toWriteIndex < gameTitle.Length)
+            {
+                Console.Write(gameTitle[toWriteIndex]);
+                Thread.Sleep(100);
+                toWriteIndex++;
+            }
+            Console.WriteLine();
+            Console.WriteLine("Race against a computer opponent to reach the finish line first!");
+            Console.WriteLine("You can land on powerups that can help or hinder your progress.");
+            Console.WriteLine("The first to reach the finish line or the last one standing wins!");
+            Console.WriteLine();
+
+            Console.WriteLine("Introducing your opponent:");
+            Console.WriteLine($"Name: {player2.name}");
+            Console.WriteLine($"HP: {player2.hp}");
+            Console.WriteLine($"XP: {player2.exp}");
+            Console.WriteLine($"Skill: {player2.skill}");
+            Console.WriteLine($"Emoji: {player2.emoji}");
+            Console.WriteLine();
+
+            Thread.Sleep(1000);
+            Console.Write("Press enter to start the game!");
+            Console.Read();
+
+            Console.Clear();
+            Console.Write("Ready?");
+            Thread.Sleep(1000);
+            Console.Write(" Set?");
+            Thread.Sleep(1000);
+            Console.Write(" GO! 🚗💨");
+            Thread.Sleep(1000);
+        }
+
         public virtual void mainLoop() {
             if (!debugMode) {
-                // Introductory animation
-                Console.Clear();
-                Console.WriteLine("In the desolate sands of Sahara...");
-                Thread.Sleep(2000);
-                Console.WriteLine("Two warriors are about to face off with their grit and mighty speed...");
-                Thread.Sleep(2000);
-                Console.WriteLine("In the EPIC battle of...");
-                Thread.Sleep(2000);
-                Console.Clear();
-                int toWriteIndex = 0;
-                string gameTitle = "🎮 MushroomKart 🎮";
-                while (toWriteIndex < gameTitle.Length) {
-                    Console.Write(gameTitle[toWriteIndex]);
-                    Thread.Sleep(100);
-                    toWriteIndex++;
-                }
-                Console.WriteLine();
-                Console.WriteLine("Race against a computer opponent to reach the finish line first!");
-                Console.WriteLine("You can land on powerups that can help or hinder your progress.");
-                Console.WriteLine("The first to reach the finish line or the last one standing wins!");
-                Console.WriteLine();
-
-                Console.WriteLine("Introducing your opponent:");
-                Console.WriteLine($"Name: {player2.name}");
-                Console.WriteLine($"HP: {player2.hp}");
-                Console.WriteLine($"XP: {player2.exp}");
-                Console.WriteLine($"Skill: {player2.skill}");
-                Console.WriteLine($"Emoji: {player2.emoji}");
-                Console.WriteLine();
-
-                Thread.Sleep(1000);
-                Console.Write("Press enter to start the game!");
-                Console.Read();
-
-                Console.Clear();
-                Console.Write("Ready?");
-                Thread.Sleep(1000);
-                Console.Write(" Set?");
-                Thread.Sleep(1000);
-                Console.Write(" GO! 🚗💨");
-                Thread.Sleep(1000);
+                DisplayStartingAnimation();
             }
-
 
             // Start main flow
             GameCharacterType whoseTurn = GameCharacterType.Player;
