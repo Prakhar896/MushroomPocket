@@ -13,10 +13,6 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace MushroomPocket
 {
-    class Hello {
-                public string message { get; set; }
-                public string Date { get; set; }
-    }
     class Program
     {
         static List<Character> pocket = [];
