@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MushroomPocket {
     enum HistoryItemActor {
@@ -17,6 +18,7 @@ namespace MushroomPocket {
 
     class GameCharacter: Character {
         public int progress = 0;
+        public string repName = "Player";
         public List<HistoryItem> history = [];
         public int xpBonus = 0;
         public bool skipNextTurn = false;
@@ -43,7 +45,30 @@ namespace MushroomPocket {
             string name = names[random.Next(0, names.Length)];
             int hp = random.Next(50, 100);
             int exp = random.Next(0, 100);
-            string skill = "Skill";
+
+            string skill = "";
+
+            switch (name) {
+                case "Waluigi":
+                    skill = "Speed";
+                    break;
+                case "Daisy":
+                    skill = "Leadership";
+                    break;
+                case "Wario":
+                    skill = "Strength";
+                    break;
+                case "Luigi":
+                    skill = "Precision and Accuracy";
+                    break;
+                case "Peach":
+                    skill = "Magic Abilities";
+                    break;
+                case "Mario":
+                    skill = "Combat Skills";
+                    break;
+            }
+
             string[] computerEmojiOptions = [
                 "👮‍♀️",
                 "👻",
@@ -55,7 +80,9 @@ namespace MushroomPocket {
                 "🥷"
             ];
             string emoji = computerEmojiOptions[random.Next(0, computerEmojiOptions.Length)];
-            return new GameCharacter(name, hp, exp, skill, emoji);
+            GameCharacter computer = new GameCharacter(name, hp, exp, skill, emoji);
+            computer.repName = "Computer";
+            return computer;
         }
 
         public int NewXP() {
