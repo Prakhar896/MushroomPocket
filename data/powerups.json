@@ -1,0 +1,37 @@
+[
+    {
+        "id": "A",
+        "name": "30 XP Boost",
+        "positionOnTrack": 10
+    },
+    {
+        "id": "B",
+        "name": "Move Back 5",
+        "positionOnTrack": 20
+    },
+    {
+        "id": "C",
+        "name": "Skip Turn",
+        "positionOnTrack": 35
+    },
+    {
+        "id": "D",
+        "name": "Swap Progress",
+        "positionOnTrack": 50
+    },
+    {
+        "id": "E",
+        "name": "Advance 3",
+        "positionOnTrack": 65
+    },
+    {
+        "id": "F",
+        "name": "2X XP Multiplier",
+        "positionOnTrack": 80
+    },
+    {
+        "id": "G",
+        "name": "Kill Opponent",
+        "positionOnTrack": 90
+    }
+]
