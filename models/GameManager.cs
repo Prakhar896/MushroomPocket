@@ -6,6 +6,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Extensions;
 
+#nullable enable
 namespace MushroomPocket {
     class GameManager {
         public enum GameCharacterType {

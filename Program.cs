@@ -6,12 +6,17 @@ using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace MushroomPocket
 {
+    class Hello {
+                public string message { get; set; }
+                public string Date { get; set; }
+    }
     class Program
     {
         static List<Character> pocket = [];
@@ -48,7 +53,6 @@ namespace MushroomPocket
 
         static void Main(string[] args)
         {
-            
             if (args.Contains("debug") || args.Contains("d")) {
                 pocket.Add(new Daisy(99, 23));
                 pocket.Add(new Daisy(99, 23));
