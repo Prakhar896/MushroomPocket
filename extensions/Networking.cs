@@ -10,6 +10,24 @@ namespace Extensions {
         public HttpClient client = new HttpClient();
         public NetworkServer() {
             client.BaseAddress = new Uri(baseAddress);
+            
+        }
+
+        public void AddRequestHeader(string key, string value) {
+            client.DefaultRequestHeaders.Add(key, value);
+        }
+
+        public void RemoveRequestHeader(string key) {
+            client.DefaultRequestHeaders.Remove(key);
+        }
+
+        public void UpdateRequestHeader(string key, string value) {
+            RemoveRequestHeader(key);
+            AddRequestHeader(key, value);
+        }
+
+        public void ClearRequestHeaders() {
+            client.DefaultRequestHeaders.Clear();
         }
 
         #nullable enable
@@ -51,10 +69,10 @@ namespace Extensions {
         }
 
         #nullable enable
-        public T? PostJSON<T>(string path, T data) {
+        public T? PostJSON<T>(string path, string serializedJSON) {
             try {
-                var json = JsonSerializer.Serialize(data);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                // var json = JsonSerializer.Serialize(data);
+                var content = new StringContent(serializedJSON, Encoding.UTF8, "application/json");
                 var response = client.PostAsync(path, content).Result;
 
                 if (response.IsSuccessStatusCode) {

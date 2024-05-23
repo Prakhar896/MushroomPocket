@@ -49,6 +49,8 @@ namespace MushroomPocket
 
         static void Main(string[] args)
         {
+            Console.WriteLine(Environment.GetEnvironmentVariable("ServerAPIKey", EnvironmentVariableTarget.User));
+            string s = Environment.GetEnvironmentVariable("ServerAPIKey", EnvironmentVariableTarget.User);
             if (args.Contains("debug") || args.Contains("d")) {
                 pocket.Add(new Daisy(99, 23));
                 pocket.Add(new Daisy(99, 23));
@@ -172,6 +174,18 @@ namespace MushroomPocket
                 Console.WriteLine("Pocket is empty. Please add at least 1 character before playing MushroomKart.");
                 return;
             }
+            // Game mode
+            Console.WriteLine(@"Game Mode:
+(1). Play against computer
+(2). Play against another player (PVP)
+            ");
+            int gameMode = Misc.SafeInputAndParse<int>("Enter game mode: ", errMessage: "Invalid game mode. Please enter a valid game mode.");
+            while (!new int[] {1, 2}.Contains(gameMode)) {
+                gameMode = Misc.SafeInputAndParse<int>("Invalid game mode. Please enter a valid game mode: ");
+            }
+
+            Console.WriteLine();
+            // Get player to choose their character
             listCharacters(showCharacterNumber: true);
             Console.WriteLine();
             int playerNumber = int.Parse(Misc.SafeInputWithPredicate(
@@ -179,19 +193,29 @@ namespace MushroomPocket
                 predicate: x => Misc.TryParse<int>(x) != null && Misc.TryParse<int>(x) <= pocket.Count,
                 errMessage: "Invalid character number. Please enter a valid character number."
             )) - 1;
-            
+
+            // Check console window
             if (Console.WindowWidth < 40) {
                 Console.WriteLine("Please resize your console window to at least 40 characters wide for the game to work properly.");
                 return;
             }
-            GameManager gameManager = new GameManager(pocket[playerNumber], debugMode: debugMode);
-            gameManager.mainLoop();
-            gameManager.playerPerformance();
 
-            pocket[playerNumber].exp = gameManager.player.NewXP();
+            // Start game based on game mode
+            if (gameMode == 1) {
+                GameManager gameManager = new GameManager(pocket[playerNumber], debugMode: debugMode);
+                gameManager.mainLoop();
+                gameManager.playerPerformance();
 
-            SavePocket();
-            return;
+                pocket[playerNumber].exp = gameManager.player.NewXP();
+
+                SavePocket();
+                return;
+            } else {
+                PVPManager pvpManager = new PVPManager(pocket[playerNumber], debugMode: debugMode);
+                pvpManager.mainLoop();
+                Console.WriteLine("End of game loop.");
+                return;
+            }
         }
 
         static void mainLoop() {
