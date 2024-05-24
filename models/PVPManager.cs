@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Nodes;
+using System.Threading;
 using Extensions;
+using Newtonsoft.Json;
 
 namespace MushroomPocket {
     class PVPManager(Character player, bool debugMode): GameManager(player, debugMode) {
         public static GameServer server = new GameServer();
         public bool terminateGame = false;
+
         public override void mainLoop()
         {
             Console.Clear();
@@ -37,12 +41,21 @@ namespace MushroomPocket {
                 }
                 gameData = server.RequestGameCode(player1Data);
             }
+
+            server.SetGameCode(gameData["code"]);
+            server.SetPlayerID("P1");
             Console.Clear();
             Console.WriteLine("You're connected to the game server for a PVP game!");
             Console.WriteLine($"Player 2, use this game code to join the game: {gameData["code"]}");
             Console.WriteLine();
             Console.WriteLine("Waiting for Player 2 to join...");
             Console.Read();
+            while (true) {
+                Thread.Sleep(1000);
+                Console.WriteLine("Fetching updates...");
+                ServerGame? game = server.GetGameStatus();
+                Console.WriteLine(game);
+            }
         }
     }
 }

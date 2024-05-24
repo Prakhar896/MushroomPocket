@@ -4,3 +4,4 @@ obj/
 logs.txt
 .DS_Store
 .env
+.env.txt

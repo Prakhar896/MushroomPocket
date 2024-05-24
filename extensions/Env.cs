@@ -21,5 +21,17 @@ namespace Extensions {
                 }
             }
         }
+
+        public static string Get(string key) {
+            if (loadedEnv == null) {
+                Load();
+            }
+
+            if (loadedEnv.ContainsKey(key)) {
+                return loadedEnv[key];
+            } else {
+                throw new Exception($"Environment variable {key} not found.");
+            }
+        }
     }
 }

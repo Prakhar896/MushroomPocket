@@ -49,8 +49,6 @@ namespace MushroomPocket
 
         static void Main(string[] args)
         {
-            Console.WriteLine(Environment.GetEnvironmentVariable("ServerAPIKey", EnvironmentVariableTarget.User));
-            string s = Environment.GetEnvironmentVariable("ServerAPIKey", EnvironmentVariableTarget.User);
             if (args.Contains("debug") || args.Contains("d")) {
                 pocket.Add(new Daisy(99, 23));
                 pocket.Add(new Daisy(99, 23));
