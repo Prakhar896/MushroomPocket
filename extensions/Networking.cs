@@ -69,7 +69,7 @@ namespace Extensions {
         }
 
         #nullable enable
-        public T? PostJSON<T>(string path, string serializedJSON) {
+        public T? PostJSONTResult<T>(string path, string serializedJSON) {
             try {
                 // var json = JsonSerializer.Serialize(data);
                 var content = new StringContent(serializedJSON, Encoding.UTF8, "application/json");
@@ -85,7 +85,27 @@ namespace Extensions {
                     return default;
                 }
             } catch (Exception e) {
-                Logger.Log("NETWORKSERVER POSTJSON ERROR: " + e.Message);
+                Logger.Log("NETWORKSERVER POSTJSONTRESULT ERROR: " + e.Message);
+                return default;
+            }
+        }
+        #nullable disable
+
+        #nullable enable
+        public string? PostJSONStringResult(string path, string serializedJSON) {
+            try {
+                // var json = JsonSerializer.Serialize(data);
+                var content = new StringContent(serializedJSON, Encoding.UTF8, "application/json");
+                var response = client.PostAsync(path, content).Result;
+
+                if (response.IsSuccessStatusCode) {
+                    var responseContent = response.Content.ReadAsStringAsync().Result;
+                    return responseContent;
+                } else {
+                    return default;
+                }
+            } catch (Exception e) {
+                Logger.Log("NETWORKSERVER POSTJSONSTRINGRESULT ERROR: " + e.Message);
                 return default;
             }
         }

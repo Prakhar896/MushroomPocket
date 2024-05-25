@@ -33,15 +33,13 @@ namespace MushroomPocket {
         //     "50 XP Boost"
         // ];
 
-        public GameManager(Character player, bool debugMode = false, bool computerMode=true, GameCharacter? player2=null) {
+        public GameManager(Character player, bool debugMode = false, bool computerMode=true) {
             this.player = new GameCharacter(player);
             if (computerMode) {
                 this.player2 = GameCharacter.GenerateComputer();
             } else {
-                if (player2 == null) {
-                    throw new Exception("Player 2 must be provided if computerMode is false.");
-                }
-                this.player2 = player2;
+                // Temporary placeholder for multiplayer mode
+                this.player2 = new GameCharacter(player);
             }
 
             // Scale powerup positions in proportional ratio to progress goal

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http.Headers;
 using Extensions;
 
@@ -43,27 +44,37 @@ namespace MushroomPocket {
         public bool skipNextTurn;
     }
 
+    #nullable enable
     class ServerGame {
-        public string code;
-        public string created;
-        public string currentTurn;
+        public required string code;
+        public required string created;
+        public required string currentTurn;
         public List<ServerEventUpdate> eventUpdates;
         public ServerPlayer? player1;
         public ServerPlayer? player2;
-        public string progressGoal;
+        public required string progressGoal;
         public string? winner;
+
+        public bool player2Joined() {
+            return this.player2 != null;
+        }
+
+        public List<ServerEventUpdate> GetUnseenEvents() {
+            return this.eventUpdates.Where(e => !e.acknowledged).ToList();
+        }
 
         public override string ToString()
         {
             return $"Game Code: {code}\n" +
                    $"Created: {created}\n" +
                    $"Current Turn: {currentTurn}\n" +
-                   $"Player 1: {player1.repName}\n" +
-                   $"Player 2: {player2.repName}\n" +
+                   $"Player 1: {player1?.repName}\n" +
+                   $"Player 2: {player2?.repName}\n" +
                    $"Progress Goal: {progressGoal}\n" +
-                   $"Winner: {winner}";
+                   $"Winner: {winner?.ToString() ?? "None"}";
         }
     }
+    #nullable disable
 
     class GameServer: NetworkServer {
         public string gameCode = null;
@@ -92,7 +103,7 @@ namespace MushroomPocket {
         }
 
         public Dictionary<string, string>? RequestGameCode(RequestGameCodeParams player1Data) {
-            Dictionary<string, string>? response = PostJSON<Dictionary<string, string>>("/requestGameCode", JSON.Serialize(player1Data));
+            Dictionary<string, string>? response = PostJSONTResult<Dictionary<string, string>>("/requestGameCode", JSON.Serialize(player1Data));
 
             if (response == null) {
                 Logger.Log($"GAMESERVER REQUESTGAMECODE ERROR: Failed to request game code. Error: Null response received.");
@@ -106,10 +117,31 @@ namespace MushroomPocket {
             }
         }
 
-        public ServerGame GetGameStatus() {
-            ServerGame? response = PostJSON<ServerGame>("/getGameStatus", JSON.Serialize(new { code = gameCode, playerID = playerID }));
+        public string GetGameStatus() {
+            string? response = PostJSONStringResult("/getGameStatus", JSON.Serialize(new {
+                code = gameCode, 
+                playerID = playerID 
+            }));
+
             if (response == null) {
                 Logger.Log("GAMESERVER GETGAMESTATUS ERROR: Failed to get game status. Error: Null response received.");
+                return null;
+            } else {
+                return response;
+            }
+        }
+
+        public string SendReadyEventUpdate() {
+            string? response = PostJSONStringResult("/sendEventUpdate", JSON.Serialize(new {
+                code = gameCode, 
+                playerID = playerID, 
+                eventType = "Ready",
+                value = "Player 1 is ready to start!",
+                progress = 0
+            }));
+
+            if (response == null) {
+                Logger.Log("GAMESERVER SENDREADYEVENTUPDATE ERROR: Failed to send ready event update. Error: Null response received.");
                 return null;
             } else {
                 return response;
