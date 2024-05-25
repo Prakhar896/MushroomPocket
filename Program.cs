@@ -176,10 +176,16 @@ namespace MushroomPocket
             Console.WriteLine(@"Game Mode:
 (1). Play against computer
 (2). Play against another player (PVP)
+(3). Join a PVP game with a code
+(4). Back to main menu
             ");
             int gameMode = Misc.SafeInputAndParse<int>("Enter game mode: ", errMessage: "Invalid game mode. Please enter a valid game mode.");
-            while (!new int[] {1, 2}.Contains(gameMode)) {
+            while (!new int[] {1, 2, 3, 4}.Contains(gameMode)) {
                 gameMode = Misc.SafeInputAndParse<int>("Invalid game mode. Please enter a valid game mode: ");
+            }
+
+            if (gameMode == 4) {
+                return;
             }
 
             Console.WriteLine();
@@ -208,8 +214,8 @@ namespace MushroomPocket
 
                 SavePocket();
                 return;
-            } else {
-                PVPManager pvpManager = new PVPManager(pocket[playerNumber], debugMode: debugMode);
+            } else if (gameMode == 2 || gameMode == 3) {
+                PVPManager pvpManager = new PVPManager(pocket[playerNumber], playerType: gameMode == 2 ? PVPPlayerType.Player1: PVPPlayerType.Player2, debugMode: debugMode);
                 pvpManager.mainLoop();
                 Console.WriteLine("End of game loop.");
                 return;

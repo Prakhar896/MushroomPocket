@@ -44,10 +44,15 @@ namespace MushroomPocket {
 
             // Scale powerup positions in proportional ratio to progress goal
             this.powerups = Powerup.LoadFromFile("data/powerups.json");
+            RePositionPowerups();
+            this.debugMode = debugMode;
+        }
+
+        public void RePositionPowerups() {
+            this.powerups = Powerup.LoadFromFile("data/powerups.json");
             foreach (Powerup powerup in powerups) {
                 powerup.positionOnTrack = (int) Math.Floor((double) progressGoal * powerup.positionOnTrack / 100);
             }
-            this.debugMode = debugMode;
         }
 
         public static string Dashes(int progressGoal) {
@@ -182,8 +187,8 @@ namespace MushroomPocket {
             Console.WriteLine("The first to reach the finish line or the last one standing wins!");
             Console.WriteLine();
 
-            Console.WriteLine("Introducing your opponent:");
-            Console.WriteLine($"Name: {player2.name}");
+            Console.WriteLine($"Introducing your opponent: {player2.repName.ToUpper()}");
+            Console.WriteLine($"Character Name: {player2.name}");
             Console.WriteLine($"HP: {player2.hp}");
             Console.WriteLine($"XP: {player2.exp}");
             Console.WriteLine($"Skill: {player2.skill}");

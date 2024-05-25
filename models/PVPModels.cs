@@ -25,6 +25,16 @@ namespace MushroomPocket {
         }
     }
 
+    class JoinGameParameters {
+        public ServerPlayer player1;
+        public string progressGoal;
+    }
+
+    class JoinGameResult {
+        public JoinGameParameters gameParameters;
+        public string message;
+    }
+
     class ServerEventUpdate {
         public string player;
         public string eventType;
@@ -117,6 +127,25 @@ namespace MushroomPocket {
             }
         }
 
+        public string JoinGameSession(string gameCode, RequestGameCodeParams player2Data) {
+            string? response = PostJSONStringResult("/joinGame", JSON.Serialize(new {
+                code = gameCode,
+                name = player2Data.name,
+                hp = player2Data.hp,
+                exp = player2Data.exp,
+                skill = player2Data.skill,
+                emoji = player2Data.emoji,
+                repName = player2Data.repName,
+            }));
+
+            if (response == null) {
+                Logger.Log("GAMESERVER JOINGAMESESSION ERROR: Failed to join game session. Error: Null response received.");
+                return null;
+            } else {
+                return response;
+            }
+        }
+
         public string GetGameStatus() {
             string? response = PostJSONStringResult("/getGameStatus", JSON.Serialize(new {
                 code = gameCode, 
@@ -132,11 +161,12 @@ namespace MushroomPocket {
         }
 
         public string SendReadyEventUpdate() {
+            string playerNum = playerID == "P1" ? "1" : "2";
             string? response = PostJSONStringResult("/sendEventUpdate", JSON.Serialize(new {
                 code = gameCode, 
                 playerID = playerID, 
                 eventType = "Ready",
-                value = "Player 1 is ready to start!",
+                value = $"Player {playerNum} is ready to start!",
                 progress = 0
             }));
 
