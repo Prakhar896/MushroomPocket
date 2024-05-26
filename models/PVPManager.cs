@@ -440,6 +440,9 @@ namespace MushroomPocket {
                     return;
                 }
 
+                player2.progress = serverGame.player1.progress;
+                player2.skipNextTurn = serverGame.player1.skipNextTurn;
+
                 List<ServerEventUpdate> unseenEvents = serverGame.GetUnseenEvents();
                 foreach (var unseenEvent in unseenEvents) {
                     if (unseenEvent.player != TranslatedCurrentPlayerID()) {
@@ -450,9 +453,6 @@ namespace MushroomPocket {
                         }
                     }
                 }
-
-                player2.progress = serverGame.player2.progress;
-                player2.skipNextTurn = serverGame.player2.skipNextTurn;
 
                 if (serverGame.currentTurn == "Player2") {
                     Console.WriteLine("it's your turn now!");
