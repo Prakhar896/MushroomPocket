@@ -194,7 +194,7 @@ namespace MushroomPocket
             Console.WriteLine();
             int playerNumber = int.Parse(Misc.SafeInputWithPredicate(
                 message: "Enter the number of your chosen character: ",
-                predicate: x => Misc.TryParse<int>(x) != null && Misc.TryParse<int>(x) <= pocket.Count,
+                predicate: x => Misc.TryParse<int>(x) != null && Misc.TryParse<int>(x) <= pocket.Count && Misc.TryParse<int>(x) > 0,
                 errMessage: "Invalid character number. Please enter a valid character number."
             )) - 1;
 
