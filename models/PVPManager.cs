@@ -20,6 +20,8 @@ namespace MushroomPocket {
 
         public PVPManager(Character player, PVPPlayerType playerType, bool debugMode): base(player, debugMode, computerMode: false) {
             this.playerType = playerType;
+            Console.WriteLine(server.baseAddress);
+            Console.Read();
         }
 
         public void CheckConnection() {

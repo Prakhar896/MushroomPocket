@@ -6,7 +6,7 @@ using Microsoft.VisualBasic;
 
 namespace Extensions {
     public class NetworkServer {
-        public string baseAddress = "http://localhost:8500";
+        public string baseAddress = Env.Get("GameServerAddress") ?? "http://localhost:8000";
         public HttpClient client = new HttpClient();
         public NetworkServer() {
             client.BaseAddress = new Uri(baseAddress);
