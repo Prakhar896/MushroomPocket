@@ -289,7 +289,7 @@ Welcome to Mushroom Pocket App
                 ");
                 Console.Write("Please only enter [1,2,3,4,5] or Q to exit: ");
                 string input = Console.ReadLine().ToLower();
-                while (!new string[] { "1", "2", "3", "4", "5", "q" }.Contains(input)) {
+                while (!new string[] { "1", "2", "3", "4", "5", "6", "q" }.Contains(input)) {
                     Console.Write("Please only enter [1,2,3,4,5] or Q to exit: ");
                     input = Console.ReadLine().ToLower();
                 }
