@@ -53,8 +53,8 @@ namespace MushroomPocket
                 pocket.Add(new Daisy(99, 23));
                 pocket.Add(new Daisy(99, 23));
                 pocket.Add(new Wario(87, 34));
-                // pocket.Add(new Wario(87, 34));
-                // pocket.Add(new Wario(87, 34));
+                pocket.Add(new Wario(87, 34));
+                pocket.Add(new Wario(87, 34));
                 pocket.Add(new Waluigi(23, 11));
 
                 if (!args.Contains("anim")) {
@@ -251,6 +251,30 @@ namespace MushroomPocket
             }
         }
 
+        static void RemoveCharacter() {
+            if (pocket.Count == 0) {
+                Console.WriteLine("Pocket is empty. Please add more characters before removing.");
+                return;
+            }
+
+            listCharacters(showCharacterNumber: true);
+            int characterNumber = Misc.SafeInputAndParse<int>("Enter the number of the character you want to remove (0 for all): ");
+            while (characterNumber > pocket.Count || characterNumber < 0) {
+                characterNumber = Misc.SafeInputAndParse<int>("Invalid character number. Please enter a valid character number: ");
+            }
+
+            if (characterNumber == 0) {
+                pocket.Clear();
+                SavePocket();
+                Console.WriteLine("All characters have been removed.");
+                return;
+            }
+
+            pocket.RemoveAt(characterNumber - 1);
+            SavePocket();
+            Console.WriteLine("Character has been removed.");
+        }
+
         static void mainLoop() {
             while (true) {
                 Console.WriteLine(@"******************************
@@ -260,7 +284,8 @@ Welcome to Mushroom Pocket App
 (2). List character(s) in my Pocket
 (3). Check if I can transform my characters
 (4). Transform character(s)
-(5). Play MushroomKart
+(5). Remove character(s)
+(6). Play MushroomKart
                 ");
                 Console.Write("Please only enter [1,2,3,4,5] or Q to exit: ");
                 string input = Console.ReadLine().ToLower();
@@ -288,6 +313,9 @@ Welcome to Mushroom Pocket App
                         transformCharacters();
                         break;
                     case 5:
+                        RemoveCharacter();
+                        break;
+                    case 6:
                         startGame();
                         break;
                 }
