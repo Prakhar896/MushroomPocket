@@ -177,5 +177,39 @@ namespace MushroomPocket {
                 return response;
             }
         }
+
+        public string SendRollingDiceEventUpdate(int playerProgress) {
+            string? response = PostJSONStringResult("/sendEventUpdate", JSON.Serialize(new {
+                code = gameCode,
+                playerID = playerID,
+                eventType = "RollingDice",
+                value = "(F)Rolling dice...",
+                progress = playerProgress
+            }));
+
+            if (response == null) {
+                Logger.Log("GAMESERVER SENDROLLINGDICEEVENTUPDATE ERROR: Failed to send rolling dice event update. Error: Null response received.");
+                return null;
+            } else {
+                return response;
+            }
+        }
+
+        public string SendDiceRolledUpdate(int playerProgress, int diceRoll) {
+            string? response = PostJSONStringResult("/sendEventUpdate", JSON.Serialize(new {
+                code = gameCode,
+                playerID = playerID,
+                eventType = "DiceRolled",
+                value = $"(F)Rolled a {diceRoll}!",
+                progress = playerProgress
+            }));
+
+            if (response == null) {
+                Logger.Log("GAMESERVER SENDDICEROLLEDUPDATE ERROR: Failed to send dice rolled event update. Error: Null response received.");
+                return null;
+            } else {
+                return response;
+            }
+        }
     }
 }

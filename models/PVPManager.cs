@@ -17,7 +17,7 @@ namespace MushroomPocket {
         public ServerGame serverGame;
         public bool terminateGame = false;
 
-        public PVPManager(Character player, PVPPlayerType playerType, bool debugMode): base(player, debugMode) {
+        public PVPManager(Character player, PVPPlayerType playerType, bool debugMode): base(player, debugMode, computerMode: false) {
             this.playerType = playerType;
         }
 
@@ -97,9 +97,15 @@ namespace MushroomPocket {
         public void DeclareReady() {
             string readyUpdateJSON = server.SendReadyEventUpdate();
             while (true) {
-                Dictionary<string, string> readyUpdateResponse = JSON.Deserialize<Dictionary<string, string>>(readyUpdateJSON);
-                if (readyUpdateResponse.ContainsKey("error")) {
-                    Logger.Log($"PVPMANAGER READYUPDATE ERROR: Error response: {readyUpdateResponse["error"]}");
+                try {
+                    Dictionary<string, string> readyUpdateResponse = JSON.Deserialize<Dictionary<string, string>>(readyUpdateJSON);
+                    if (readyUpdateResponse.ContainsKey("error")) {
+                        throw new Exception($"Error response received from server: {readyUpdateResponse["error"]}");
+                    } else {
+                        return;
+                    }
+                } catch (Exception err) {
+                    Logger.Log($"PVPMANAGER READYUPDATE ERROR: {err.Message}");
                     Console.WriteLine("Failed to tell game server that you are ready.");
                     if (Misc.Input("Try again? (Y/N) ").ToLower() != "y") {
                         terminateGame = true;
@@ -108,8 +114,54 @@ namespace MushroomPocket {
                         Console.WriteLine("Re-trying...");
                         readyUpdateJSON = server.SendReadyEventUpdate();
                     }
-                } else {
-                    return;
+                }
+            }
+        }
+
+        public void RollingDiceNow() {
+            string rollingUpdateJSON = server.SendRollingDiceEventUpdate(player.progress);
+            while (true) {
+                try {
+                    Dictionary<string, string> rollingUpdateResponse = JSON.Deserialize<Dictionary<string, string>>(rollingUpdateJSON);
+                    if (rollingUpdateResponse.ContainsKey("error")) {
+                        throw new Exception($"Error response received from server: {rollingUpdateResponse["error"]}");
+                    } else {
+                        return;
+                    }
+                } catch (Exception err) {
+                    Logger.Log($"PVPMANAGER ROLLINGDICENOW ERROR: {err.Message}");
+                    Console.WriteLine("Failed to tell game server that you are rolling dice now.");
+                    if (Misc.Input("Try again? (Y/N) ").ToLower() != "y") {
+                        terminateGame = true;
+                        return;
+                    } else {
+                        Console.WriteLine("Re-trying...");
+                        rollingUpdateJSON = server.SendRollingDiceEventUpdate(player.progress);
+                    }
+                }
+            }
+        }
+
+        public void DiceRolled(int diceRoll) {
+            string diceRolledUpdateJSON = server.SendDiceRolledUpdate(player.progress, diceRoll);
+            while (true) {
+                try {
+                    Dictionary<string, string> diceRolledUpdateResponse = JSON.Deserialize<Dictionary<string, string>>(diceRolledUpdateJSON);
+                    if (diceRolledUpdateResponse.ContainsKey("error")) {
+                        throw new Exception($"Error response received from server: {diceRolledUpdateResponse["error"]}");
+                    } else {
+                        return;
+                    }
+                } catch (Exception err) {
+                    Logger.Log($"PVPMANAGER DICEROLLED ERROR: {err.Message}");
+                    Console.WriteLine("Failed to tell game server that you have rolled the dice.");
+                    if (Misc.Input("Try again? (Y/N) ").ToLower() != "y") {
+                        terminateGame = true;
+                        return;
+                    } else {
+                        Console.WriteLine("Re-trying...");
+                        diceRolledUpdateJSON = server.SendDiceRolledUpdate(player.progress, diceRoll);
+                    }
                 }
             }
         }
@@ -284,7 +336,7 @@ namespace MushroomPocket {
                     return;
                 }
 
-                bool p1Ready = serverGame.GetUnseenEvents().Any(e => e.player == "Player1" && e.eventType == "Ready");
+                bool p1Ready = serverGame.eventUpdates.Any(e => e.player == "Player1" && e.eventType == "Ready");
                 if (p1Ready) {
                     Console.Clear();
                     Console.WriteLine($"{serverGame.player1.repName} is ready!");
@@ -296,6 +348,10 @@ namespace MushroomPocket {
             Console.WriteLine("Starting game...");
             Thread.Sleep(2000);
             return;
+        }
+
+        public string TranslatedCurrentPlayerID() {
+            return server.playerID == "P1" ? "Player1" : "Player2";
         }
 
         public override void mainLoop()
@@ -319,10 +375,90 @@ namespace MushroomPocket {
                     return;
                 }
             }
+            
+            if (!debugMode) {
+                DisplayStartingAnimation();
+            }
+            while (true) {
+                ProduceVisuals();
+                string translatedCurrentPlayerID = server.playerID == "P1" ? "Player1" : "Player2";
+                if (serverGame.currentTurn == translatedCurrentPlayerID) {
+                    playerTurn();
+                    if (terminateGame) {
+                        return;
+                    }
+                } else {
+                    player2Turn();
+                    if (terminateGame) {
+                        return;
+                    }
+                }
+            }
+        }
 
-            DisplayStartingAnimation();
-            ProduceVisuals();
+        public override void playerTurn()
+        {
+            bool playerLeading = player.progress > player2.progress;
+            Console.WriteLine($"[{player.repName}] It's your turn! Roll a dice by pressing enter.");
+            Console.Read();
+
+            // Send rolling event update
+            RollingDiceNow();
+            if (terminateGame) {
+                return;
+            }
+            UpdateVisualsWithStatement($"[{player.repName}] Rolling dice...");
+            Thread.Sleep(1000);
+            int diceRoll = rollDice();
+
+            player.progress += diceRoll;
+            Powerup? powerup = Powerup.FindByPosition(player.progress, powerups);
+            player.addHistoryItem(
+                actor: HistoryItemActor.Player,
+                roll: diceRoll,
+                action: "Rolled dice",
+                resultantProgress: player.progress,
+                powerup: powerup
+            );
+
+            // Update server with dice roll and player progress
+            DiceRolled(diceRoll);
+            if (terminateGame) {
+                return;
+            }
+            UpdateVisualsWithStatement($"[{player.repName}] You rolled a {diceRoll}!");
             Console.WriteLine("reached!");
+            Console.Read();
+        }
+
+        public void player2Turn() {
+            Console.WriteLine($"[{player2.repName}] It's {player2.repName}'s turn! Please wait.");
+            while (true) {
+                Thread.Sleep(1000);
+                FetchGame();
+                if (terminateGame) {
+                    return;
+                }
+
+                List<ServerEventUpdate> unseenEvents = serverGame.GetUnseenEvents();
+                foreach (var unseenEvent in unseenEvents) {
+                    if (unseenEvent.player != TranslatedCurrentPlayerID()) {
+                        if (unseenEvent.value.StartsWith("(F)")) {
+                            UpdateVisualsWithStatement($"[{player2.repName}] {unseenEvent.value.Substring(3)}");
+                        } else {
+                            Console.WriteLine($"[{player2.repName}] {unseenEvent.value}");
+                        }
+                    }
+                }
+
+                player2.progress = serverGame.player2.progress;
+                player2.skipNextTurn = serverGame.player2.skipNextTurn;
+
+                if (serverGame.currentTurn == "Player2") {
+                    Console.WriteLine("it's your turn now!");
+                    break;
+                }
+            }
         }
     }
 }

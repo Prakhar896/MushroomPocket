@@ -10,7 +10,6 @@ namespace Extensions {
         public HttpClient client = new HttpClient();
         public NetworkServer() {
             client.BaseAddress = new Uri(baseAddress);
-            
         }
 
         public void AddRequestHeader(string key, string value) {
