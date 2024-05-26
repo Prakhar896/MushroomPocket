@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography.X509Certificates;
 using Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -48,13 +49,12 @@ namespace MushroomPocket
 
         static void Main(string[] args)
         {
-            
             if (args.Contains("debug") || args.Contains("d")) {
                 pocket.Add(new Daisy(99, 23));
                 pocket.Add(new Daisy(99, 23));
                 pocket.Add(new Wario(87, 34));
-                // pocket.Add(new Wario(87, 34));
-                // pocket.Add(new Wario(87, 34));
+                pocket.Add(new Wario(87, 34));
+                pocket.Add(new Wario(87, 34));
                 pocket.Add(new Waluigi(23, 11));
 
                 if (!args.Contains("anim")) {
@@ -172,6 +172,24 @@ namespace MushroomPocket
                 Console.WriteLine("Pocket is empty. Please add at least 1 character before playing MushroomKart.");
                 return;
             }
+            // Game mode
+            Console.WriteLine(@"Game Mode:
+(1). Play against computer
+(2). Play against another player (PVP)
+(3). Join a PVP game with a code
+(4). Back to main menu
+            ");
+            int gameMode = Misc.SafeInputAndParse<int>("Enter game mode: ", errMessage: "Invalid game mode. Please enter a valid game mode.");
+            while (!new int[] {1, 2, 3, 4}.Contains(gameMode)) {
+                gameMode = Misc.SafeInputAndParse<int>("Invalid game mode. Please enter a valid game mode: ");
+            }
+
+            if (gameMode == 4) {
+                return;
+            }
+
+            Console.WriteLine();
+            // Get player to choose their character
             listCharacters(showCharacterNumber: true);
             Console.WriteLine();
             int playerNumber = int.Parse(Misc.SafeInputWithPredicate(
@@ -179,19 +197,82 @@ namespace MushroomPocket
                 predicate: x => Misc.TryParse<int>(x) != null && Misc.TryParse<int>(x) <= pocket.Count,
                 errMessage: "Invalid character number. Please enter a valid character number."
             )) - 1;
-            
+
+            // Check console window
             if (Console.WindowWidth < 40) {
                 Console.WriteLine("Please resize your console window to at least 40 characters wide for the game to work properly.");
                 return;
             }
-            GameManager gameManager = new GameManager(pocket[playerNumber], debugMode: debugMode);
-            gameManager.mainLoop();
-            gameManager.playerPerformance();
 
-            pocket[playerNumber].exp = gameManager.player.NewXP();
+            // Start game based on game mode
+            if (gameMode == 1) {
+                GameManager gameManager = new GameManager(pocket[playerNumber], debugMode: debugMode);
+                gameManager.mainLoop();
+                gameManager.playerPerformance();
 
+                pocket[playerNumber].exp = gameManager.player.NewXP();
+
+                SavePocket();
+                return;
+            } else if (gameMode == 2 || gameMode == 3) {
+                PVPManager pvpManager = new PVPManager(pocket[playerNumber], playerType: gameMode == 2 ? PVPPlayerType.Player1: PVPPlayerType.Player2, debugMode: debugMode);
+                pvpManager.mainLoop();
+                Console.WriteLine("------");
+                pvpManager.playerPerformance();
+
+                pocket[playerNumber].exp = pvpManager.player.NewXP();
+
+                if (pvpManager.winner == GameManager.GameCharacterType.Player) {
+                    switch (pocket[playerNumber].name.ToLower()) {
+                        case "daisy":
+                            pocket.Add(new Daisy(100, 50));
+                            break;
+                        case "wario":
+                            pocket.Add(new Wario(100, 50));
+                            break;
+                        case "waluigi":
+                            pocket.Add(new Waluigi(100, 50));
+                            break;
+                        case "peach":
+                            pocket.Add(new Peach(100, 50));
+                            break;
+                        case "mario":
+                            pocket.Add(new Mario(100, 50));
+                            break;
+                        case "luigi":
+                            pocket.Add(new Luigi(100, 50));
+                            break;
+                    }
+                    Console.WriteLine($"As a reward for winning the PVP game, a new {pocket[playerNumber].name} has been added to your pocket!");
+                }
+
+                SavePocket();
+                return;
+            }
+        }
+
+        static void RemoveCharacter() {
+            if (pocket.Count == 0) {
+                Console.WriteLine("Pocket is empty. Please add more characters before removing.");
+                return;
+            }
+
+            listCharacters(showCharacterNumber: true);
+            int characterNumber = Misc.SafeInputAndParse<int>("Enter the number of the character you want to remove (0 for all): ");
+            while (characterNumber > pocket.Count || characterNumber < 0) {
+                characterNumber = Misc.SafeInputAndParse<int>("Invalid character number. Please enter a valid character number: ");
+            }
+
+            if (characterNumber == 0) {
+                pocket.Clear();
+                SavePocket();
+                Console.WriteLine("All characters have been removed.");
+                return;
+            }
+
+            pocket.RemoveAt(characterNumber - 1);
             SavePocket();
-            return;
+            Console.WriteLine("Character has been removed.");
         }
 
         static void mainLoop() {
@@ -203,7 +284,8 @@ Welcome to Mushroom Pocket App
 (2). List character(s) in my Pocket
 (3). Check if I can transform my characters
 (4). Transform character(s)
-(5). Play MushroomKart
+(5). Remove character(s)
+(6). Play MushroomKart
                 ");
                 Console.Write("Please only enter [1,2,3,4,5] or Q to exit: ");
                 string input = Console.ReadLine().ToLower();
@@ -231,6 +313,9 @@ Welcome to Mushroom Pocket App
                         transformCharacters();
                         break;
                     case 5:
+                        RemoveCharacter();
+                        break;
+                    case 6:
                         startGame();
                         break;
                 }

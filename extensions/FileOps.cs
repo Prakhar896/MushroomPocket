@@ -14,6 +14,10 @@ namespace Extensions {
 
         #nullable enable
         public static (string? text, string[]? lines) ReadFrom(string path, FileReadMode mode = FileReadMode.ReadAll) {
+            if (!File.Exists(path)) {
+                return (text: null, lines: null);
+            }
+
             if (mode == FileReadMode.ReadAll) {
                 return (text: File.ReadAllText(path), lines: null);
             } else if (mode == FileReadMode.ReadAllLines) {

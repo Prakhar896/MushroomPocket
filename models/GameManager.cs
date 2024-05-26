@@ -6,15 +6,16 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Extensions;
 
+#nullable enable
 namespace MushroomPocket {
     class GameManager {
         public enum GameCharacterType {
             Player,
-            Computer
+            Player2
         }
 
         public GameCharacter player;
-        public GameCharacter computer;
+        public GameCharacter player2;
         public int progressGoal = Console.WindowWidth / 2 - 10;
         public List<Powerup> powerups;
         public GameCharacterType? winner = null;
@@ -32,16 +33,26 @@ namespace MushroomPocket {
         //     "50 XP Boost"
         // ];
 
-        public GameManager(Character player, bool debugMode = false) {
+        public GameManager(Character player, bool debugMode = false, bool computerMode=true) {
             this.player = new GameCharacter(player);
-            this.computer = GameCharacter.GenerateComputer();
+            if (computerMode) {
+                this.player2 = GameCharacter.GenerateComputer();
+            } else {
+                // Temporary placeholder for multiplayer mode
+                this.player2 = new GameCharacter(player);
+            }
 
             // Scale powerup positions in proportional ratio to progress goal
+            this.powerups = Powerup.LoadFromFile("data/powerups.json");
+            RePositionPowerups();
+            this.debugMode = debugMode;
+        }
+
+        public void RePositionPowerups() {
             this.powerups = Powerup.LoadFromFile("data/powerups.json");
             foreach (Powerup powerup in powerups) {
                 powerup.positionOnTrack = (int) Math.Floor((double) progressGoal * powerup.positionOnTrack / 100);
             }
-            this.debugMode = debugMode;
         }
 
         public static string Dashes(int progressGoal) {
@@ -60,8 +71,8 @@ namespace MushroomPocket {
             }
             
             void PrintTrackForCharacter(GameCharacter character, GameCharacterType type) {
-                Console.WriteLine($"{(type == GameCharacterType.Player ? "[PLAYER]" : "[COMPUTER]")}");
-                Console.WriteLine(GameManager.Dashes(progressGoal));
+                Console.WriteLine($"{(type == GameCharacterType.Player ? $"[{player.repName.ToUpper()}]" : $"[{player2.repName.ToUpper()}]")}");
+                Console.WriteLine(Dashes(progressGoal));
                 Console.Write("START ");
                 for (int i = 0; i < progressGoal; i++) {
                     Powerup? powerup = Powerup.FindByPosition(i, powerups);
@@ -74,12 +85,11 @@ namespace MushroomPocket {
                     }
                 }
                 Console.WriteLine("END");
-                Console.WriteLine(GameManager.Dashes(progressGoal));
+                Console.WriteLine(Dashes(progressGoal));
             }
-            
 
             PrintTrackForCharacter(player, GameCharacterType.Player);
-            PrintTrackForCharacter(computer, GameCharacterType.Computer);
+            PrintTrackForCharacter(player2, GameCharacterType.Player2);
 
             Console.WriteLine("💪 Powerups:");
             foreach (Powerup powerup in powerups) {
@@ -90,141 +100,154 @@ namespace MushroomPocket {
 
         public int rollDice() {
             Random random = new Random();
-            return random.Next(1, 7);
+            return powerups.Find((p) => p.id == "G").positionOnTrack;
+            // return random.Next(1, 7);
         }
 
-        public void landedOnPowerup(GameCharacterType actor, Powerup powerup) {
+        public string? landedOnPowerup(GameCharacterType actor, Powerup powerup, bool returnString = false) {
+            string toBeReturned = "";
             switch (powerup.id) {
                 case "A":
                     if (actor == GameCharacterType.Player) {
                         player.xpBonus += 30;
                     } else {
-                        computer.xpBonus += 30;
+                        player2.xpBonus += 30;
                     }
+                    toBeReturned = "Received an additional 30 XP!";
                     Console.WriteLine("Received an additional 30 XP!");
                     break;
                 case "B":
                     if (actor == GameCharacterType.Player) {
                         player.progress -= 5;
                     } else {
-                        computer.progress -= 5;
+                        player2.progress -= 5;
                     }
+                    toBeReturned = "Moved back 5 steps on the track!";
                     Console.WriteLine("Moved back 5 steps on the track!");
                     break;
                 case "C":
                     if (actor == GameCharacterType.Player) {
                         player.skipNextTurn = true;
                     } else {
-                        computer.skipNextTurn = true;
+                        player2.skipNextTurn = true;
                     }
+                    toBeReturned = "Next turn will be skipped!";
                     Console.WriteLine("Next turn will be skipped!");
                     break;
                 case "D":
                     int playerProgress = player.progress;
-                    player.progress = computer.progress;
-                    computer.progress = playerProgress;
+                    player.progress = player2.progress;
+                    player2.progress = playerProgress;
+                    toBeReturned = "Swapped progress with the opponent!";
                     Console.WriteLine("Swapped progress with the opponent!");
                     break;
                 case "E":
                     if (actor == GameCharacterType.Player) {
                         player.progress += 3;
                     } else {
-                        computer.progress += 3;
+                        player2.progress += 3;
                     }
+                    toBeReturned = "Advanced 3 steps!";
                     Console.WriteLine("Advanced 3 steps!");
                     break;
                 case "F":
                     if (actor == GameCharacterType.Player) {
                         player.doubleXPMultiplier = true;
                     } else {
-                        computer.doubleXPMultiplier = true;
+                        player2.doubleXPMultiplier = true;
                     }
+                    toBeReturned = "XP multiplier doubled!";
                     Console.WriteLine("XP multiplier doubled!");
                     break;
                 case "G":
                     if (actor == GameCharacterType.Player) {
-                        computer.hp = 0;
+                        player2.hp = 0;
                     } else {
                         player.hp = 0;
                     }
+                    toBeReturned = "Killed opponent! Lucky you!!! 😈";
                     Console.WriteLine("Killed opponent! Lucky you!!! 😈");
                     break;
             }
-            Console.Read();
+            return returnString ? toBeReturned: null;
         }
 
-        public void mainLoop() {
-            if (!debugMode) {
-                // Introductory animation
-                Console.Clear();
-                Console.WriteLine("In the desolate sands of Sahara...");
-                Thread.Sleep(2000);
-                Console.WriteLine("Two warriors are about to face off with their grit and mighty speed...");
-                Thread.Sleep(2000);
-                Console.WriteLine("In the EPIC battle of...");
-                Thread.Sleep(2000);
-                Console.Clear();
-                int toWriteIndex = 0;
-                string gameTitle = "🎮 MushroomKart 🎮";
-                while (toWriteIndex < gameTitle.Length) {
-                    Console.Write(gameTitle[toWriteIndex]);
-                    Thread.Sleep(100);
-                    toWriteIndex++;
-                }
-                Console.WriteLine();
-                Console.WriteLine("Race against a computer opponent to reach the finish line first!");
-                Console.WriteLine("You can land on powerups that can help or hinder your progress.");
-                Console.WriteLine("The first to reach the finish line or the last one standing wins!");
-                Console.WriteLine();
-
-                Console.WriteLine("Introducing your opponent:");
-                Console.WriteLine($"Name: {computer.name}");
-                Console.WriteLine($"HP: {computer.hp}");
-                Console.WriteLine($"XP: {computer.exp}");
-                Console.WriteLine($"Skill: {computer.skill}");
-                Console.WriteLine($"Emoji: {computer.emoji}");
-                Console.WriteLine();
-
-                Thread.Sleep(1000);
-                Console.Write("Press enter to start the game!");
-                Console.Read();
-
-                Console.Clear();
-                Console.Write("Ready?");
-                Thread.Sleep(1000);
-                Console.Write(" Set?");
-                Thread.Sleep(1000);
-                Console.Write(" GO! 🚗💨");
-                Thread.Sleep(1000);
+        public virtual void DisplayStartingAnimation() {
+            // Introductory animation
+            Console.Clear();
+            Console.WriteLine("In the desolate sands of Sahara...");
+            Thread.Sleep(2000);
+            Console.WriteLine("Two warriors are about to face off with their grit and mighty speed...");
+            Thread.Sleep(2000);
+            Console.WriteLine("In the EPIC battle of...");
+            Thread.Sleep(2000);
+            Console.Clear();
+            int toWriteIndex = 0;
+            string gameTitle = "🎮 MushroomKart 🎮";
+            while (toWriteIndex < gameTitle.Length)
+            {
+                Console.Write(gameTitle[toWriteIndex]);
+                Thread.Sleep(100);
+                toWriteIndex++;
             }
+            Console.WriteLine();
+            Console.WriteLine("Race against a computer opponent to reach the finish line first!");
+            Console.WriteLine("You can land on powerups that can help or hinder your progress.");
+            Console.WriteLine("The first to reach the finish line or the last one standing wins!");
+            Console.WriteLine();
 
+            Console.WriteLine($"Introducing your opponent: {player2.repName.ToUpper()}");
+            Console.WriteLine($"Character Name: {player2.name}");
+            Console.WriteLine($"HP: {player2.hp}");
+            Console.WriteLine($"XP: {player2.exp}");
+            Console.WriteLine($"Skill: {player2.skill}");
+            Console.WriteLine($"Emoji: {player2.emoji}");
+            Console.WriteLine();
+
+            Thread.Sleep(1000);
+            Console.Write("Press enter to start the game!");
+            Console.Read();
+
+            Console.Clear();
+            Console.Write("Ready?");
+            Thread.Sleep(1000);
+            Console.Write(" Set?");
+            Thread.Sleep(1000);
+            Console.Write(" GO! 🚗💨");
+            Thread.Sleep(1000);
+        }
+
+        public virtual void mainLoop() {
+            if (!debugMode) {
+                DisplayStartingAnimation();
+            }
 
             // Start main flow
             GameCharacterType whoseTurn = GameCharacterType.Player;
-            while (player.progress < progressGoal && computer.progress < progressGoal && player.hp > 0 && computer.hp > 0) {
+            while (player.progress < progressGoal && player2.progress < progressGoal && player.hp > 0 && player2.hp > 0) {
                 ProduceVisuals();
                 if (whoseTurn == GameCharacterType.Player) {
                     if (!player.skipNextTurn) {
                         playerTurn();
                     } else {
-                        Console.WriteLine("[PLAYER] Skipping turn!");
+                        Console.WriteLine($"[{player.repName}] Skipping turn!");
                         player.skipNextTurn = false;
                     }
 
-                    whoseTurn = GameCharacterType.Computer;
+                    whoseTurn = GameCharacterType.Player2;
                 } else {
-                    if (!computer.skipNextTurn) {
+                    if (!player2.skipNextTurn) {
                         computerTurn();
                     } else {
-                        Console.WriteLine("[COMPUTER] Skipping turn!");
-                        computer.skipNextTurn = false;
+                        Console.WriteLine($"[{player2.repName}] Skipping turn!");
+                        player2.skipNextTurn = false;
                     }
 
                     whoseTurn = GameCharacterType.Player;
                 }
             }
 
-            if (player.progress >= progressGoal || computer.hp <= 0) {
+            if (player.progress >= progressGoal || player2.hp <= 0) {
                 if (player.progress >= progressGoal) {
                     Console.WriteLine("PLAYER CROSSES THE CHECKERED FLAG AND WINS!");
                 } else {
@@ -238,14 +261,14 @@ namespace MushroomPocket {
                 }
                 Console.WriteLine();
                 winner = GameCharacterType.Player;
-            } else if (computer.progress >= progressGoal || player.hp <= 0) {
-                if (computer.progress >= progressGoal) {
+            } else if (player2.progress >= progressGoal || player.hp <= 0) {
+                if (player2.progress >= progressGoal) {
                     Console.WriteLine("COMPUTER CROSSES THE CHECKERED FLAG AND WINS!");
                 } else {
                     Console.WriteLine("Player lost its HP - COMPUTER WINS!");
                 }
-                computer.xpBonus += 200;
-                winner = GameCharacterType.Computer;
+                player2.xpBonus += 200;
+                winner = GameCharacterType.Player2;
             }
 
             Console.WriteLine();
@@ -260,8 +283,8 @@ namespace MushroomPocket {
             Console.WriteLine(statement);
         }
 
-        public void playerTurn() {
-            bool playerLeading = player.progress > computer.progress;
+        public virtual void playerTurn() {
+            bool playerLeading = player.progress > player2.progress;
             Console.WriteLine("[PLAYER] It's your turn! Roll a dice by pressing enter.");
             Console.Read();
 
@@ -287,7 +310,7 @@ namespace MushroomPocket {
                 landedOnPowerup(GameCharacterType.Player, powerup);
             }
 
-            if (player.progress > computer.progress && (playerLeading != player.progress > computer.progress)) {
+            if (player.progress > player2.progress && (playerLeading != player.progress > player2.progress)) {
                 Console.WriteLine("[PLAYER] You are now IN THE LEAD!");
             }
 
@@ -296,19 +319,19 @@ namespace MushroomPocket {
             return;
         }
 
-        public void computerTurn() {
-            bool computerLeading = computer.progress > player.progress;
+        public virtual void computerTurn() {
+            bool computerLeading = player2.progress > player.progress;
             Console.WriteLine("[COMPUTER] Rolling dice...");
             Thread.Sleep(1000);
 
             int diceRoll = rollDice();
-            computer.progress += diceRoll;
-            Powerup? powerup = Powerup.FindByPosition(computer.progress, powerups);
-            computer.addHistoryItem(
+            player2.progress += diceRoll;
+            Powerup? powerup = Powerup.FindByPosition(player2.progress, powerups);
+            player2.addHistoryItem(
                 actor: HistoryItemActor.Computer,
                 roll: diceRoll,
                 action: "Rolled dice",
-                resultantProgress: computer.progress,
+                resultantProgress: player2.progress,
                 powerup: powerup
             );
 
@@ -316,10 +339,10 @@ namespace MushroomPocket {
 
             if (powerup != null) {
                 Console.WriteLine($"[COMPUTER] Landed on a powerup: {powerup.name}!");
-                landedOnPowerup(GameCharacterType.Computer, powerup);
+                landedOnPowerup(GameCharacterType.Player2, powerup);
             }
 
-            if (computer.progress > player.progress && (computerLeading != computer.progress > player.progress)) {
+            if (player2.progress > player.progress && (computerLeading != player2.progress > player.progress)) {
                 Console.WriteLine("[COMPUTER] Computer is now IN THE LEAD!");
             }
 
