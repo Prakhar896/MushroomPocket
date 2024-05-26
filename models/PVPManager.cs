@@ -166,6 +166,54 @@ namespace MushroomPocket {
             }
         }
 
+        public void PowerupActivated(Powerup powerup, string output) {
+            string powerupActivatedJSON = server.SendPowerupActivatedUpdate(player.progress, player2.progress, powerup, output);
+            while (true) {
+                try {
+                    Dictionary<string, string> powerupActivatedResponse = JSON.Deserialize<Dictionary<string, string>>(powerupActivatedJSON);
+                    if (powerupActivatedResponse.ContainsKey("error")) {
+                        throw new Exception($"Error response received from server: {powerupActivatedResponse["error"]}");
+                    } else {
+                        return;
+                    }
+                } catch (Exception err) {
+                    Logger.Log($"PVPMANAGER POWERUPACTIVATED ERROR: {err.Message}");
+                    Console.WriteLine("Failed to tell game server that you have activated a powerup.");
+                    if (Misc.Input("Try again? (Y/N) ").ToLower() != "y") {
+                        terminateGame = true;
+                        return;
+                    } else {
+                        Console.WriteLine("Re-trying...");
+                        powerupActivatedJSON = server.SendPowerupActivatedUpdate(player.progress, player2.progress, powerup, output);
+                    }
+                }
+            }
+        }
+
+        public void TurnOver() {
+            string turnOverJSON = server.SendTurnOverUpdate(player.progress, player2.progress);
+            while (true) {
+                try {
+                    Dictionary<string, string> turnOverResponse = JSON.Deserialize<Dictionary<string, string>>(turnOverJSON);
+                    if (turnOverResponse.ContainsKey("error")) {
+                        throw new Exception($"Error response received from server: {turnOverResponse["error"]}");
+                    } else {
+                        return;
+                    }
+                } catch (Exception err) {
+                    Logger.Log($"PVPMANAGER TURNOVER ERROR: {err.Message}");
+                    Console.WriteLine("Failed to tell game server that your turn is over.");
+                    if (Misc.Input("Try again? (Y/N) ").ToLower() != "y") {
+                        terminateGame = true;
+                        return;
+                    } else {
+                        Console.WriteLine("Re-trying...");
+                        turnOverJSON = server.SendTurnOverUpdate(player.progress, player2.progress);
+                    }
+                }
+            }
+        }
+
         public void Player1Setup() {
             // Request new game session from server
             Console.Clear();
@@ -380,7 +428,12 @@ namespace MushroomPocket {
                 DisplayStartingAnimation();
             }
             while (true) {
+                FetchGame();
+                if (terminateGame) {
+                    return;
+                }
                 ProduceVisuals();
+
                 string translatedCurrentPlayerID = server.playerID == "P1" ? "Player1" : "Player2";
                 if (serverGame.currentTurn == translatedCurrentPlayerID) {
                     playerTurn();
@@ -399,6 +452,7 @@ namespace MushroomPocket {
         public override void playerTurn()
         {
             bool playerLeading = player.progress > player2.progress;
+            Console.WriteLine(server.playerID);
             Console.WriteLine($"[{player.repName}] It's your turn! Roll a dice by pressing enter.");
             Console.Read();
 
@@ -427,8 +481,25 @@ namespace MushroomPocket {
                 return;
             }
             UpdateVisualsWithStatement($"[{player.repName}] You rolled a {diceRoll}!");
-            Console.WriteLine("reached!");
+            
+            if (powerup != null) {
+                Console.WriteLine($"[{player.repName}] Landed on a powerup: {powerup.name}");
+                string output = landedOnPowerup(GameCharacterType.Player, powerup, true);
+                PowerupActivated(powerup, output);
+                if (terminateGame) {
+                    return;
+                }
+            }
+
+            Console.WriteLine();
+            if (player.progress > player2.progress && (playerLeading != player.progress > player2.progress)) {
+                Console.WriteLine($"[{player.repName}] You are now IN THE LEAD!");
+            }
+
+            Console.WriteLine("Turn over. Press enter to continue.");
             Console.Read();
+            TurnOver();
+            return;
         }
 
         public void player2Turn() {
@@ -454,7 +525,7 @@ namespace MushroomPocket {
                     }
                 }
 
-                if (serverGame.currentTurn == "Player2") {
+                if (serverGame.currentTurn == TranslatedCurrentPlayerID()) {
                     Console.WriteLine("it's your turn now!");
                     break;
                 }

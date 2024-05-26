@@ -100,10 +100,12 @@ namespace MushroomPocket {
 
         public int rollDice() {
             Random random = new Random();
-            return random.Next(1, 7);
+            return 4;
+            // return random.Next(1, 7);
         }
 
-        public void landedOnPowerup(GameCharacterType actor, Powerup powerup) {
+        public string? landedOnPowerup(GameCharacterType actor, Powerup powerup, bool returnString = false) {
+            string toBeReturned = "";
             switch (powerup.id) {
                 case "A":
                     if (actor == GameCharacterType.Player) {
@@ -111,6 +113,7 @@ namespace MushroomPocket {
                     } else {
                         player2.xpBonus += 30;
                     }
+                    toBeReturned = "Received an additional 30 XP!";
                     Console.WriteLine("Received an additional 30 XP!");
                     break;
                 case "B":
@@ -119,6 +122,7 @@ namespace MushroomPocket {
                     } else {
                         player2.progress -= 5;
                     }
+                    toBeReturned = "Moved back 5 steps on the track!";
                     Console.WriteLine("Moved back 5 steps on the track!");
                     break;
                 case "C":
@@ -127,12 +131,14 @@ namespace MushroomPocket {
                     } else {
                         player2.skipNextTurn = true;
                     }
+                    toBeReturned = "Next turn will be skipped!";
                     Console.WriteLine("Next turn will be skipped!");
                     break;
                 case "D":
                     int playerProgress = player.progress;
                     player.progress = player2.progress;
                     player2.progress = playerProgress;
+                    toBeReturned = "Swapped progress with the opponent!";
                     Console.WriteLine("Swapped progress with the opponent!");
                     break;
                 case "E":
@@ -141,6 +147,7 @@ namespace MushroomPocket {
                     } else {
                         player2.progress += 3;
                     }
+                    toBeReturned = "Advanced 3 steps!";
                     Console.WriteLine("Advanced 3 steps!");
                     break;
                 case "F":
@@ -149,6 +156,7 @@ namespace MushroomPocket {
                     } else {
                         player2.doubleXPMultiplier = true;
                     }
+                    toBeReturned = "XP multiplier doubled!";
                     Console.WriteLine("XP multiplier doubled!");
                     break;
                 case "G":
@@ -157,10 +165,11 @@ namespace MushroomPocket {
                     } else {
                         player.hp = 0;
                     }
+                    toBeReturned = "Killed opponent! Lucky you!!! 😈";
                     Console.WriteLine("Killed opponent! Lucky you!!! 😈");
                     break;
             }
-            Console.Read();
+            return returnString ? toBeReturned: null;
         }
 
         public virtual void DisplayStartingAnimation() {

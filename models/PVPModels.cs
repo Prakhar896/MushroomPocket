@@ -211,5 +211,42 @@ namespace MushroomPocket {
                 return response;
             }
         }
+
+        public string SendPowerupActivatedUpdate(int playerProgress, int p2Progress, Powerup powerup, string powerupOutput) {
+            string? response = PostJSONStringResult("/sendEventUpdate", JSON.Serialize(new {
+                code = gameCode,
+                playerID = playerID,
+                eventType = "PowerupActivated",
+                value = $"Landed on a powerup: {powerup.name}! {powerupOutput}",
+                progress = playerProgress,
+                p2Progress = p2Progress,
+                skipNextTurn = powerup.id == "C"
+            }));
+
+            if (response == null) {
+                Logger.Log("GAMESERVER SENDPOWERUPACTIVATEDUPDATE ERROR: Failed to send landed on powerup update. Error: Null response received.");
+                return null;
+            } else {
+                return response;
+            }
+        }
+
+        public string SendTurnOverUpdate(int playerProgress, int p2Progress) {
+            string? response = PostJSONStringResult("/sendEventUpdate", JSON.Serialize(new {
+                code = gameCode,
+                playerID = playerID,
+                eventType = "TurnOver",
+                value = "Turn over!",
+                progress = playerProgress,
+                p2Progress = p2Progress
+            }));
+
+            if (response == null) {
+                Logger.Log("GAMESERVER SENDTURNOVERUPDATE ERROR: Failed to send turn over update. Error: Null response received.");
+                return null;
+            } else {
+                return response;
+            }
+        }
     }
 }
