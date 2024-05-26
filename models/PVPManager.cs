@@ -458,6 +458,22 @@ namespace MushroomPocket {
                 if (terminateGame) {
                     return;
                 }
+
+                // Update to latest changes
+                if (server.playerID == "P2") {
+                    player.progress = serverGame.player2.progress;
+                    player.hp = int.Parse(serverGame.player2.hp);
+
+                    player2.progress = serverGame.player1.progress;
+                    player2.hp = int.Parse(serverGame.player1.hp);
+                } else {
+                    player.progress = serverGame.player1.progress;
+                    player.hp = int.Parse(serverGame.player1.hp);
+
+                    player2.progress = serverGame.player2.progress;
+                    player2.hp = int.Parse(serverGame.player2.hp);
+                }
+
                 ProduceVisuals();
 
                 string translatedCurrentPlayerID = server.playerID == "P1" ? "Player1" : "Player2";
@@ -524,7 +540,6 @@ namespace MushroomPocket {
         public override void playerTurn()
         {
             bool playerLeading = player.progress > player2.progress;
-            Console.WriteLine(server.playerID);
             Console.WriteLine($"[{player.repName}] It's your turn! Roll a dice by pressing enter.");
             Console.Read();
 
