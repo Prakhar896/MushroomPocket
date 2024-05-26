@@ -613,7 +613,7 @@ namespace MushroomPocket {
                 }
 
                 if (serverGame.currentTurn == TranslatedCurrentPlayerID()) {
-                    Console.WriteLine("It's your turn now!");
+                    // Console.WriteLine("It's your turn now!");
                     break;
                 }
             }
