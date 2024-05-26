@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text.Json.Nodes;
 using System.Threading;
 using Extensions;
@@ -167,7 +168,7 @@ namespace MushroomPocket {
         }
 
         public void PowerupActivated(Powerup powerup, string output) {
-            string powerupActivatedJSON = server.SendPowerupActivatedUpdate(player.progress, player2.progress, powerup, output);
+            string powerupActivatedJSON = server.SendPowerupActivatedUpdate(player.progress, player2.progress, player.hp, player2.hp, powerup, output);
             while (true) {
                 try {
                     Dictionary<string, string> powerupActivatedResponse = JSON.Deserialize<Dictionary<string, string>>(powerupActivatedJSON);
@@ -184,7 +185,7 @@ namespace MushroomPocket {
                         return;
                     } else {
                         Console.WriteLine("Re-trying...");
-                        powerupActivatedJSON = server.SendPowerupActivatedUpdate(player.progress, player2.progress, powerup, output);
+                        powerupActivatedJSON = server.SendPowerupActivatedUpdate(player.progress, player2.progress, player.hp, player2.hp, powerup, output);
                     }
                 }
             }
@@ -209,6 +210,30 @@ namespace MushroomPocket {
                     } else {
                         Console.WriteLine("Re-trying...");
                         turnOverJSON = server.SendTurnOverUpdate(player.progress, player2.progress);
+                    }
+                }
+            }
+        }
+
+        public void GameOverUpdate(bool won, string reason) {
+            string gameOverAckJSON = server.GameOverAck(player.progress, player2.progress, won, reason);
+            while (true) {
+                try {
+                    Dictionary<string, string> gameOverAckResponse = JSON.Deserialize<Dictionary<string, string>>(gameOverAckJSON);
+                    if (gameOverAckResponse.ContainsKey("error")) {
+                        throw new Exception($"Error response received from server: {gameOverAckResponse["error"]}");
+                    } else {
+                        return;
+                    }
+                } catch (Exception err) {
+                    Logger.Log($"PVPMANAGER GAMEOVERUPDATE ERROR: {err.Message}");
+                    Console.WriteLine("Failed to tell game server that the game is over.");
+                    if (Misc.Input("Try again? (Y/N) ").ToLower() != "y") {
+                        terminateGame = true;
+                        return;
+                    } else {
+                        Console.WriteLine("Re-trying...");
+                        gameOverAckJSON = server.GameOverAck(player.progress, player2.progress, won, reason);
                     }
                 }
             }
@@ -427,7 +452,8 @@ namespace MushroomPocket {
             if (!debugMode) {
                 DisplayStartingAnimation();
             }
-            while (true) {
+
+            while (player.progress < progressGoal && player2.progress < progressGoal && player.hp > 0 && player2.hp > 0 && serverGame.winner == null) {
                 FetchGame();
                 if (terminateGame) {
                     return;
@@ -447,6 +473,52 @@ namespace MushroomPocket {
                     }
                 }
             }
+
+            // Get latest updates to process how the game ended (while loop condition covers a lot of cases)
+            FetchGame();
+            if (terminateGame) {
+                return;
+            }
+            player.progress = server.playerID == "P1" ? serverGame.player1.progress : serverGame.player2.progress;
+            player.hp = server.playerID == "P1" ? int.Parse(serverGame.player1.hp) : int.Parse(serverGame.player2.hp);
+
+            player2.progress = server.playerID == "P1" ? serverGame.player2.progress : serverGame.player1.progress;
+            player2.hp = server.playerID == "P1" ? int.Parse(serverGame.player2.hp) : int.Parse(serverGame.player1.hp);
+            
+            Console.WriteLine();
+            if (player.progress >= progressGoal || player2.hp <= 0) {
+                if (player.progress >= progressGoal) {
+                    GameOverUpdate(true, $"{player.repName} CROSSES THE CHECKERED FLAG AND WINS!");
+                    Console.WriteLine($"{player.repName} CROSSES THE CHECKERED FLAG AND WINS!");
+                } else {
+                    GameOverUpdate(true, $"{player2.repName} lost their HP - {player.repName} WINS!");
+                    Console.WriteLine($"{player2.repName} lost their HP - {player.repName} WINS!");
+                }
+                player.xpBonus += 200;
+
+                for (int i = 0; i < 5; i++) {
+                    Console.Write("🎉");
+                    Thread.Sleep(500);
+                }
+                Console.WriteLine();
+                winner = GameCharacterType.Player;
+            } else if (player2.progress >= progressGoal || player.hp <= 0) {
+                if (player2.progress >= progressGoal) {
+                    GameOverUpdate(false, $"{player2.repName} CROSSES THE CHECKERED FLAG AND WINS!");
+                    Console.WriteLine($"{player2.repName} CROSSES THE CHECKERED FLAG AND WINS!");
+                } else {
+                    GameOverUpdate(false, $"{player.repName} lost their HP - {player2.repName} WINS!");
+                    Console.WriteLine($"{player.repName} lost their HP - {player2.repName} WINS!");
+                }
+                Console.WriteLine("You lost! Better luck next time. ;(");
+                player2.xpBonus += 200;
+                winner = GameCharacterType.Player2;
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("GAME OVER!");
+            Console.WriteLine();
+            Console.WriteLine();
         }
 
         public override void playerTurn()
@@ -507,10 +579,10 @@ namespace MushroomPocket {
             while (true) {
                 Thread.Sleep(1000);
                 FetchGame();
-                if (terminateGame) {
+                if (terminateGame || serverGame.winner != null) {
                     return;
                 }
-
+                
                 player2.progress = serverGame.player1.progress;
                 player2.skipNextTurn = serverGame.player1.skipNextTurn;
 

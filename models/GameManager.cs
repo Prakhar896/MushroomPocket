@@ -100,7 +100,7 @@ namespace MushroomPocket {
 
         public int rollDice() {
             Random random = new Random();
-            return 4;
+            return powerups.Find((p) => p.id == "G").positionOnTrack;
             // return random.Next(1, 7);
         }
 

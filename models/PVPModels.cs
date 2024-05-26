@@ -212,7 +212,7 @@ namespace MushroomPocket {
             }
         }
 
-        public string SendPowerupActivatedUpdate(int playerProgress, int p2Progress, Powerup powerup, string powerupOutput) {
+        public string SendPowerupActivatedUpdate(int playerProgress, int p2Progress, int p1HP, int p2HP, Powerup powerup, string powerupOutput) {
             string? response = PostJSONStringResult("/sendEventUpdate", JSON.Serialize(new {
                 code = gameCode,
                 playerID = playerID,
@@ -220,6 +220,8 @@ namespace MushroomPocket {
                 value = $"Landed on a powerup: {powerup.name}! {powerupOutput}",
                 progress = playerProgress,
                 p2Progress = p2Progress,
+                p1HP = p1HP,
+                p2HP = p2HP,
                 skipNextTurn = powerup.id == "C"
             }));
 
@@ -243,6 +245,25 @@ namespace MushroomPocket {
 
             if (response == null) {
                 Logger.Log("GAMESERVER SENDTURNOVERUPDATE ERROR: Failed to send turn over update. Error: Null response received.");
+                return null;
+            } else {
+                return response;
+            }
+        }
+
+        public string GameOverAck(int playerProgress, int p2Progress, bool won, string reason) {
+            string? response = PostJSONStringResult("/sendEventUpdate", JSON.Serialize(new {
+                code = gameCode,
+                playerID = playerID,
+                eventType = "GameOverAck",
+                progress = playerProgress,
+                p2Progress = p2Progress,
+                value = reason,
+                won = won
+            }));
+            
+            if (response == null) {
+                Logger.Log("GAMESERVER GAMEOVERACK ERROR: Failed to send game over ack. Error: Null response received.");
                 return null;
             } else {
                 return response;
