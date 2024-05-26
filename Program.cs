@@ -217,7 +217,36 @@ namespace MushroomPocket
             } else if (gameMode == 2 || gameMode == 3) {
                 PVPManager pvpManager = new PVPManager(pocket[playerNumber], playerType: gameMode == 2 ? PVPPlayerType.Player1: PVPPlayerType.Player2, debugMode: debugMode);
                 pvpManager.mainLoop();
-                Console.WriteLine("End of game loop.");
+                Console.WriteLine("------");
+                pvpManager.playerPerformance();
+
+                pocket[playerNumber].exp = pvpManager.player.NewXP();
+
+                if (pvpManager.winner == GameManager.GameCharacterType.Player) {
+                    switch (pocket[playerNumber].name.ToLower()) {
+                        case "daisy":
+                            pocket.Add(new Daisy(100, 50));
+                            break;
+                        case "wario":
+                            pocket.Add(new Wario(100, 50));
+                            break;
+                        case "waluigi":
+                            pocket.Add(new Waluigi(100, 50));
+                            break;
+                        case "peach":
+                            pocket.Add(new Peach(100, 50));
+                            break;
+                        case "mario":
+                            pocket.Add(new Mario(100, 50));
+                            break;
+                        case "luigi":
+                            pocket.Add(new Luigi(100, 50));
+                            break;
+                    }
+                    Console.WriteLine($"As a reward for winning the PVP game, a new {pocket[playerNumber].name} has been added to your pocket!");
+                }
+
+                SavePocket();
                 return;
             }
         }
