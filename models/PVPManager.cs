@@ -598,8 +598,13 @@ namespace MushroomPocket {
                     return;
                 }
                 
-                player2.progress = serverGame.player1.progress;
-                player2.skipNextTurn = serverGame.player1.skipNextTurn;
+                if (server.playerID == "P2") {
+                    player2.progress = serverGame.player1.progress;
+                    player2.skipNextTurn = serverGame.player1.skipNextTurn;
+                } else {
+                    player2.progress = serverGame.player2.progress;
+                    player2.skipNextTurn = serverGame.player2.skipNextTurn;
+                }
 
                 List<ServerEventUpdate> unseenEvents = serverGame.GetUnseenEvents();
                 foreach (var unseenEvent in unseenEvents) {
