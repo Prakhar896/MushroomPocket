@@ -20,8 +20,6 @@ namespace MushroomPocket {
 
         public PVPManager(Character player, PVPPlayerType playerType, bool debugMode): base(player, debugMode, computerMode: false) {
             this.playerType = playerType;
-            Console.WriteLine(server.baseAddress);
-            Console.Read();
         }
 
         public void CheckConnection() {
@@ -600,7 +598,7 @@ namespace MushroomPocket {
                 }
 
                 if (serverGame.currentTurn == TranslatedCurrentPlayerID()) {
-                    Console.WriteLine("it's your turn now!");
+                    Console.WriteLine("It's your turn now!");
                     break;
                 }
             }

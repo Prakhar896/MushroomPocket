@@ -100,8 +100,7 @@ namespace MushroomPocket {
 
         public int rollDice() {
             Random random = new Random();
-            return powerups.Find((p) => p.id == "G").positionOnTrack;
-            // return random.Next(1, 7);
+            return random.Next(1, 7);
         }
 
         public string? landedOnPowerup(GameCharacterType actor, Powerup powerup, bool returnString = false) {
