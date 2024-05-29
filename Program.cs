@@ -25,7 +25,14 @@ namespace MushroomPocket
         ];
 
         static void SavePocket() {
-            if (!Misc.IsWindows()) {
+            if (Misc.IsWindows()) {
+                using (var db = new DatabaseContext()) {
+                    db.Characters.RemoveRange(db.Characters);
+                    db.Characters.AddRange(pocket);
+                    db.SaveChanges();
+                    db.Database.ExecuteSqlRaw("PRAGMA wal_checkpoint(FULL)");
+                }
+            } else {
                 using (var db = new DatabaseContext()) {
                     db.Database.EnsureCreated();
                     foreach (var character in db.Characters) {
@@ -37,28 +44,21 @@ namespace MushroomPocket
                     db.Dispose();
                     FileOps.DeleteTempDBFiles();
                 }
-            } else {
-                using (var db = new DatabaseContext()) {
-                    db.Characters.RemoveRange(db.Characters);
-                    db.Characters.AddRange(pocket);
-                    db.SaveChanges();
-                    db.Database.ExecuteSqlRaw("PRAGMA wal_checkpoint(FULL)");
-                }
             }
         }
 
         static void LoadPocket() {
-            if (!Misc.IsWindows()) {
+            if (Misc.IsWindows()) {
+                using (var db = new DatabaseContext()) {
+                    db.Database.EnsureCreated();
+                    pocket = db.Characters.ToList();
+                }
+            } else {
                 using (var db = new DatabaseContext()) {
                     db.Database.EnsureCreated();
                     pocket = db.Characters.ToList();
                     db.Dispose();
                     FileOps.DeleteTempDBFiles();
-                }
-            } else {
-                using (var db = new DatabaseContext()) {
-                    db.Database.EnsureCreated();
-                    pocket = db.Characters.ToList();
                 }
             }
         }
