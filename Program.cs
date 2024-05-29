@@ -25,26 +25,41 @@ namespace MushroomPocket
         ];
 
         static void SavePocket() {
-            using (var db = new DatabaseContext()) {
-                db.Database.EnsureCreated();
-                foreach (var character in db.Characters) {
-                    db.Characters.Remove(character);
+            if (!Misc.IsWindows()) {
+                using (var db = new DatabaseContext()) {
+                    db.Database.EnsureCreated();
+                    foreach (var character in db.Characters) {
+                        db.Characters.Remove(character);
+                    }
+                    db.Characters.AddRange(pocket);
+                    db.SaveChanges();
+                    db.Database.ExecuteSqlInterpolated($"PRAGMA wal_checkpoint(FULL)");
+                    db.Dispose();
+                    FileOps.DeleteTempDBFiles();
                 }
-                db.Characters.AddRange(pocket);
-                db.SaveChanges();
-                db.Database.ExecuteSqlInterpolated($"PRAGMA wal_checkpoint(FULL)");
-                db.Dispose();
-                FileOps.DeleteTempDBFiles();
+            } else {
+                using (var db = new DatabaseContext()) {
+                    db.Characters.RemoveRange(db.Characters);
+                    db.Characters.AddRange(pocket);
+                    db.SaveChanges();
+                    db.Database.ExecuteSqlRaw("PRAGMA wal_checkpoint(FULL)");
+                }
             }
         }
 
         static void LoadPocket() {
-            Console.WriteLine(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : "Not Windows");
-            using (var db = new DatabaseContext()) {
-                db.Database.EnsureCreated();
-                pocket = db.Characters.ToList();
-                db.Dispose();
-                FileOps.DeleteTempDBFiles();
+            if (!Misc.IsWindows()) {
+                using (var db = new DatabaseContext()) {
+                    db.Database.EnsureCreated();
+                    pocket = db.Characters.ToList();
+                    db.Dispose();
+                    FileOps.DeleteTempDBFiles();
+                }
+            } else {
+                using (var db = new DatabaseContext()) {
+                    db.Database.EnsureCreated();
+                    pocket = db.Characters.ToList();
+                }
             }
         }
 

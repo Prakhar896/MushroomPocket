@@ -1,7 +1,11 @@
 using System;
+using System.Runtime.InteropServices;
 
 namespace Extensions {
     class Misc {
+        public static bool IsWindows() {
+            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+        }
         public static T? TryParse<T>(string input) where T : struct {
             try {
                 return (T)Convert.ChangeType(input, typeof(T));
