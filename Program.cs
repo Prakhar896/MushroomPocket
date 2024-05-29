@@ -39,6 +39,7 @@ namespace MushroomPocket
         }
 
         static void LoadPocket() {
+            Console.WriteLine(RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "Windows" : "Not Windows");
             using (var db = new DatabaseContext()) {
                 db.Database.EnsureCreated();
                 pocket = db.Characters.ToList();
