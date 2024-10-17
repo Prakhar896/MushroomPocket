@@ -9,8 +9,8 @@ MushroomPocket uses a proprietary MushroomServer to host PVP games.
 
 If PVP games are not working for you, ensure that you have an `.env.txt` file in the root directory with the following contents:
 ```
-ServerAPIKey=mush2006
-GameServerAddress=https://mushroomserver.replit.app
+ServerAPIKey=mushprodKey2024
+GameServerAddress=https://mushroomserver.prakhar.app
 ```
 
 ## Purpose
